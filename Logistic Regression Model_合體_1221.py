@@ -13,8 +13,8 @@ matplotlib.rc('font', family='Microsoft JhengHei')  # 將繪圖字型改為微�
 
 
 # 讀取 csv 檔，我把財務變數跟類別變數分開讀取
-df1 = pd.read_csv("D:\Quantitative\Quantitative_1222\羅吉斯迴歸模型樣本_20231208_財務變數.csv", index_col=0)
-df2 = pd.read_csv("D:\Quantitative\Quantitative_1222\羅吉斯迴歸模型樣本_20231208_類別變數.csv", index_col=0)
+df1 = pd.read_csv("羅吉斯迴歸模型樣本_20231208_財務變數.csv", index_col=0)
+df2 = pd.read_csv("羅吉斯迴歸模型樣本_20231208_類別變數.csv", index_col=0)
 
 # 將財務變數每一欄位遺漏值以平均數填滿
 df1.fillna(df1.mean(), inplace=True)
@@ -53,24 +53,25 @@ y_test.to_csv("D:\Quantitative\y_test.csv")
 
 
 ''' 單因子分析，將所有自變數逐一對 Y 進行羅吉斯迴歸，並取得 P-value '''
-pvalue_results = pd.DataFrame(columns = ['Variable', 'P-value'])
+pvalue_results = pd.DataFrame(columns=['Variable', 'P-value'])
 # 逐一將 X 對 Y 進行羅吉斯迴歸
 for column in X.columns[1:]:  # 第一欄為截距項，從第二欄開始
     model = sm.Logit(y, X[[column]])
     result = model.fit()
     p_value = result.pvalues[column]
-    pvalue_results = pvalue_results.append({'Variable': column, 'P-value': p_value}, ignore_index=True)
+    new_row = pd.DataFrame({'Variable': [column], 'P-value': [p_value]})
+    pvalue_results = pd.concat([pvalue_results, new_row], ignore_index=True)
 
 # 印出 P-value < 0.1 之自變數
 significant_results = pvalue_results[pvalue_results['P-value'] < 0.1]
 print(significant_results)
 df_x_significant = X_train.loc[:, significant_results['Variable']]
-#pvalue_results.to_csv("D:\Quantitative\Quantitative_1222\P-value.csv", index=False)
+pvalue_results.to_csv("P-value.csv", index=False)
 
 ''' 建立相關係數矩陣 '''
 # 建立相關係數矩陣以分析變數間相關性，將相關係數 > 0.5 或 < -0.5 的變數挑一個留下
 corr = df_x_significant.corr()
-#corr.to_csv("D:\Quantitative\Quantitative_1222\Corr.csv")
+corr.to_csv("Corr.csv")
 
 # 把留下的變數找回來
 columns_to_keep = ['營業利益率', '稅後淨利率', '現金流量比率', '有息負債利率', 
