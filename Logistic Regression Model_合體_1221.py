@@ -2,17 +2,19 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
-import matplotlib
 import seaborn as sns
 from sklearn.metrics import roc_curve, roc_auc_score, confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
 from sklearn.model_selection import train_test_split
-from matplotlib.font_manager import fontManager
-for i in sorted(fontManager.get_font_names()):      # 使用 fontManager 物件檢視系統資料夾中的字型
-    print(i)
-matplotlib.rc('font', family='Microsoft JhengHei')  # 將繪圖字型改為微軟正黑體
+from matplotlib import pyplot as plt, font_manager
+# 設置中文字體
+plt.rcParams['font.sans-serif'] = ['Microsoft JhengHei']
+plt.rcParams['axes.unicode_minus'] = False
+# 如果需要查看可用字體，可以取消註釋以下代碼
+# available_fonts = sorted([f.name for f in font_manager.fontManager.ttflist])
+# for font in available_fonts:
+#     print(font)
 
-
-# 讀取 csv 檔，我把財務變數跟類別變數分開讀取
+# 讀取 csv 檔，將財務變數與類別變數分開讀取
 df1 = pd.read_csv("羅吉斯迴歸模型樣本_20231208_財務變數.csv", index_col=0)
 df2 = pd.read_csv("羅吉斯迴歸模型樣本_20231208_類別變數.csv", index_col=0)
 
@@ -23,7 +25,7 @@ df1.fillna(df1.mean(), inplace=True)
 df1.isnull().sum()
 df2.isnull().sum()
 
-# 把 Y 刪除，另存成財務(finance)、類別(category)，df_x_fin、df_x_cat 兩變數
+# 將 Y 刪除，另存為財務（finance）、類別（category），df_x_fin、df_x_cat 兩變數
 df_x_fin = df1.drop(columns = ['Y'])
 df_x_cat = df2.drop(columns = ['Y'])
 
@@ -66,7 +68,7 @@ for column in X.columns[1:]:  # 第一欄為截距項，從第二欄開始
 significant_results = pvalue_results[pvalue_results['P-value'] < 0.1]
 print(significant_results)
 df_x_significant = X_train.loc[:, significant_results['Variable']]
-pvalue_results.to_csv("P-value.csv", index=False)
+pvalue_results.to_csv("P-value.csv", index=False, encoding='utf-8')
 
 ''' 建立相關係數矩陣 '''
 # 建立相關係數矩陣以分析變數間相關性，將相關係數 > 0.5 或 < -0.5 的變數挑一個留下
@@ -90,8 +92,8 @@ df_x_significant_keep = df_x_significant[columns_to_keep]
 # Step 1. 添加截距項
 X_train = sm.add_constant(df_x_significant_keep)
 
-# Step 2. 建立逐步迴歸 Function
-def stepwise_selection(X, y, initial_list=[], threshold_in=0.4, threshold_out=0.5, verbose=True):
+# Step 2. 建立逐步迴歸 Function，可調整 threshold_in, threshold_out
+def stepwise_selection(X, y, initial_list=[], threshold_in=0.5, threshold_out=0.5, verbose=True):
     included = list(initial_list)
     while True:
         changed = False
@@ -121,7 +123,7 @@ def stepwise_selection(X, y, initial_list=[], threshold_in=0.4, threshold_out=0.
     return included
 
 # Step 3. 將訓練集丟進去跑逐步迴歸
-stepwise_result = stepwise_selection(X_train, y_train)
+stepwise_result = stepwise_selection(X_train, y_train, threshold_in=0.4, threshold_out=0.5)
 
 # Step 4. 印出該選擇的變數
 print("Selected features:", stepwise_result)
@@ -291,7 +293,7 @@ def Draw_Confusion_Matrix(i, cut_off, X_train_final, y_train):
     plt.show()
 
 Build_Logistic_Model(1, X_train_final_1, X_test_final_1, y_train)
-Draw_Confusion_Matrix(1, 0.14, X_train_final_1, y_train)
+Draw_Confusion_Matrix(1, 0.5, X_train_final_1, y_train)
 Build_Logistic_Model(2, X_train_final_2, X_test_final_2, y_train)
 Draw_Confusion_Matrix(2, 0.2, X_train_final_2, y_train)
 Build_Logistic_Model(3, X_train_fianl_3, X_test_final_3, y_train)
